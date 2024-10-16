@@ -34,6 +34,10 @@ public class ProductManager {
         productRepository.addProduct(product);
     }
 
+    public void removeProduct(Long id) {
+        this.productRepository.removeProduct(id);
+    }
+
     public List<Product> getAllProducts() {
         return productRepository.getAll();
     }

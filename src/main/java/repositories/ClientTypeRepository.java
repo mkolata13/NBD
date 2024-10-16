@@ -13,11 +13,20 @@ public class ClientTypeRepository {
     }
 
     public ClientType addClientType(ClientType clientType) {
-        if (clientType.getId() == null) {
-            em.persist(clientType);
-        } else {
-            em.merge(clientType);
+        try {
+            em.getTransaction().begin();
+            if (clientType.getId() == null) {
+                em.persist(clientType);
+            } else {
+                clientType = em.merge(clientType);
+            }
+            em.getTransaction().commit();
+            em.detach(clientType);
+        } catch (Exception e) {
+            em.getTransaction().rollback();
+            throw e;
         }
+
         return clientType;
     }
 }

@@ -27,54 +27,64 @@ public class CustomerOrderManager {
     }
 
     public void addCustomerOrder(Client client, List<Product> products) {
-        em.getTransaction().begin();
-        if (products.isEmpty()) {
+        try {
+            em.getTransaction().begin();
+            if (products.isEmpty()) {
+                em.getTransaction().rollback();
+                throw new RuntimeException("Order cannot be empty");
+            }
+
+            List<Product> availableProducts = new ArrayList<>();
+
+            for (Product product : products) {
+                Product lockedProduct = em.find(Product.class, product.getId(), LockModeType.OPTIMISTIC_FORCE_INCREMENT);
+                if (lockedProduct.isAvailable()) {
+                    productRepository.decrementQuantityOfProduct(lockedProduct.getId());
+                    if (lockedProduct.getQuantity() == 0) {
+                        productRepository.setProductUnAvailability(lockedProduct.getId());
+                    }
+                    availableProducts.add(lockedProduct);
+                } else {
+                    System.out.println("Product " + lockedProduct.getId() + " is unavailable and will not be ordered.");
+                }
+            }
+
+            if (availableProducts.isEmpty()) {
+                em.getTransaction().rollback();
+                throw new RuntimeException("No products are available for ordering.");
+            }
+
+            CustomerOrder customerOrder = new CustomerOrder(client, availableProducts);
+            customerOrderRepository.addCustomerOrder(customerOrder);
+            em.getTransaction().commit();
+        } catch (Exception e) {
             em.getTransaction().rollback();
-            throw new RuntimeException("Order cannot be empty");
+            throw e;
         }
+    }
 
-        List<Product> availableProducts = new ArrayList<>();
-
-        for (Product product : products) {
+    public void addCustomerOrder(Client client, Product product) {
+        try {
+            em.getTransaction().begin();
             Product lockedProduct = em.find(Product.class, product.getId(), LockModeType.OPTIMISTIC_FORCE_INCREMENT);
-            if (lockedProduct.isAvailable()) {
+            if (!lockedProduct.isAvailable()) {
+                em.getTransaction().rollback();
+                System.out.println("Product " + lockedProduct.getId() + " is unavailable and cannot be ordered.");
+                return;
+            } else {
                 productRepository.decrementQuantityOfProduct(lockedProduct.getId());
                 if (lockedProduct.getQuantity() == 0) {
                     productRepository.setProductUnAvailability(lockedProduct.getId());
                 }
-                availableProducts.add(lockedProduct);
-            } else {
-                System.out.println("Product " + lockedProduct.getId() + " is unavailable and will not be ordered.");
             }
-        }
 
-        if (availableProducts.isEmpty()) {
+            CustomerOrder customerOrder = new CustomerOrder(client, lockedProduct);
+            customerOrderRepository.addCustomerOrder(customerOrder);
+            em.getTransaction().commit();
+        } catch (Exception e) {
             em.getTransaction().rollback();
-            throw new RuntimeException("No products are available for ordering.");
+            throw e;
         }
-
-        CustomerOrder customerOrder = new CustomerOrder(client, availableProducts);
-        customerOrderRepository.addCustomerOrder(customerOrder);
-        em.getTransaction().commit();
-    }
-
-    public void addCustomerOrder(Client client, Product product) {
-        em.getTransaction().begin();
-        Product lockedProduct = em.find(Product.class, product.getId(), LockModeType.OPTIMISTIC_FORCE_INCREMENT);
-        if (!lockedProduct.isAvailable()) {
-            em.getTransaction().rollback();
-            System.out.println("Product " + lockedProduct.getId() + " is unavailable and cannot be ordered.");
-            return;
-        } else {
-            productRepository.decrementQuantityOfProduct(lockedProduct.getId());
-            if (lockedProduct.getQuantity() == 0) {
-                productRepository.setProductUnAvailability(lockedProduct.getId());
-            }
-        }
-
-        CustomerOrder customerOrder = new CustomerOrder(client, lockedProduct);
-        customerOrderRepository.addCustomerOrder(customerOrder);
-        em.getTransaction().commit();
     }
 
     public List<CustomerOrder> findAllOrders() {
