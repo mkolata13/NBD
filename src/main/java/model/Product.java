@@ -1,49 +1,57 @@
 package model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.bson.codecs.pojo.annotations.BsonCreator;
+import org.bson.codecs.pojo.annotations.BsonProperty;
+import org.bson.types.ObjectId;
 
-@Entity
+
 @Getter
 @Setter
-@NoArgsConstructor
-public class Product extends AbstractEntity{
+public class Product extends AbstractEntity {
 
-    @Column
-    @NotNull
+    @BsonProperty("name")
     private String name;
 
-    @Column(name = "base_price")
-    @NotNull
+    @BsonProperty("baseprice")
     private double basePrice;
 
-    @Column
-    @NotNull
+    @BsonProperty("weight")
     private double weight;
 
-    @Column
-    @NotNull
-    @Min(value = 0)
+    @BsonProperty("quantity")
     private int quantity;
 
-    @Column
-    @NotNull
+    @BsonProperty("description")
     private String description;
 
-    @Column(name = "is_available")
-    @NotNull
-    private boolean isAvailable = true;
+    @BsonProperty("isavailable")
+    private boolean isAvailable;
 
-    public Product(String name, double basePrice, double weight, int quantity, String description) {
+    @BsonCreator
+    public Product(@BsonProperty("_id") ObjectId entityId,
+                   @BsonProperty("name")String name,
+                   @BsonProperty("baseprice")double basePrice,
+                   @BsonProperty("weight")double weight,
+                   @BsonProperty("quantity")int quantity,
+                   @BsonProperty("description")String description) {
+        super(entityId);
         this.name = name;
         this.weight = weight;
         this.basePrice = basePrice;
         this.quantity = quantity;
         this.description = description;
+        this.isAvailable = quantity > 0;
+    }
+
+    public Product(String name, double basePrice, double weight, int quantity, String description) {
+        super(new ObjectId());
+        this.name = name;
+        this.weight = weight;
+        this.basePrice = basePrice;
+        this.quantity = quantity;
+        this.description = description;
+        this.isAvailable = quantity > 0;
     }
 }

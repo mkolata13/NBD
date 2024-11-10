@@ -1,19 +1,21 @@
 package model;
 
-import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.bson.codecs.pojo.annotations.BsonProperty;
+import org.bson.types.ObjectId;
 
 import java.io.Serializable;
 
-@MappedSuperclass
-@Access(AccessType.FIELD)
-@Embeddable
 @Getter
+@Setter
+@NoArgsConstructor
 public abstract class AbstractEntity implements Serializable {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    public Long id;
+    @BsonProperty("_id")
+    private ObjectId entityId;
 
-    @Version
-    protected Long version;
+    public AbstractEntity(ObjectId entityId) {
+        this.entityId = entityId;
+    }
 }

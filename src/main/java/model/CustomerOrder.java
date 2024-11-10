@@ -1,37 +1,47 @@
 package model;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.bson.codecs.pojo.annotations.BsonCreator;
+import org.bson.codecs.pojo.annotations.BsonProperty;
+import org.bson.types.ObjectId;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Entity
+
 @Getter
 @Setter
-@NoArgsConstructor
-@Table(name = "customer_order")
 public class CustomerOrder extends AbstractEntity {
 
-    @Column(name = "order_date")
+    @BsonProperty("orderdate")
     private LocalDateTime orderDate;
 
-    @Column(name = "order_price")
+    @BsonProperty("orderprice")
     private double orderPrice = 0;
 
-    @ManyToOne
-    @JoinColumn
-    @NotNull
+    @BsonProperty("client")
     private Client client;
 
-    @ManyToMany
+    @BsonProperty("products")
     private List<Product> products;
 
+    @BsonCreator
+    public CustomerOrder(@BsonProperty("_id") ObjectId entityId,
+                         @BsonProperty("client")Client client,
+                         @BsonProperty("produtcts")List<Product> products,
+                         @BsonProperty("orderdate")LocalDateTime orderDate,
+                         @BsonProperty("orderPrice")double orderPrice) {
+        super(entityId);
+        this.client = client;
+        this.products = products;
+        this.orderDate = orderDate;
+        this.orderPrice = orderPrice;
+    }
+
     public CustomerOrder(Client client, List<Product> products) {
+        super(new ObjectId());
         this.orderDate = LocalDateTime.now();
         this.client = client;
         this.products = products;
@@ -40,6 +50,7 @@ public class CustomerOrder extends AbstractEntity {
     }
 
     public CustomerOrder(Client client, Product product) {
+        super(new ObjectId());
         this.orderDate = LocalDateTime.now();
         this.client = client;
         this.products = new ArrayList<>();

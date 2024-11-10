@@ -1,33 +1,42 @@
 package model;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.bson.codecs.pojo.annotations.BsonCreator;
+import org.bson.codecs.pojo.annotations.BsonProperty;
+import org.bson.types.ObjectId;
 
-@Entity
 @Getter
 @Setter
-@NoArgsConstructor
-public class Client extends AbstractEntity{
+public class Client extends AbstractEntity {
 
-    @Column(name = "first_name")
-    @NotNull
+    @BsonProperty("firstname")
     private String firstName;
 
-    @Column(name = "last_name")
-    @NotNull
+    @BsonProperty("lastname")
     private String lastName;
 
-    @Column(name = "phone_number")
+    @BsonProperty("phonenumber")
     private String phoneNumber;
 
-    @ManyToOne
-    @NotNull
+    @BsonProperty("client_type")
     ClientType clientType;
 
+    @BsonCreator
+    public Client(@BsonProperty("_id") ObjectId entityId,
+                  @BsonProperty("firstname") String firstName,
+                  @BsonProperty("lastname") String lastName,
+                  @BsonProperty("phonenumber") String phoneNumber,
+                  @BsonProperty("client_type") ClientType clientType) {
+        super(entityId);
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.phoneNumber = phoneNumber;
+        this.clientType = clientType;
+    }
+
     public Client(String firstName, String lastName, String phoneNumber, ClientType clientType) {
+        super(new ObjectId());
         this.firstName = firstName;
         this.lastName = lastName;
         this.phoneNumber = phoneNumber;

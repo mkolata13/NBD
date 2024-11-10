@@ -1,27 +1,21 @@
 package model;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.bson.codecs.pojo.annotations.BsonCreator;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 
-@Entity
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@Table(name = "client_type")
-public abstract class ClientType extends AbstractEntity {
+@NoArgsConstructor
+@Setter
+@Getter
+public abstract class ClientType {
 
-    @Column(name = "discount")
-    @Min(value = 0, message = "Discount must be at least 0.")
-    @Max(value = 1, message = "Discount cannot exceed 1 (100%).")
+    @BsonProperty("discount")
     protected double discount;
 
-    public void setDiscount(double discount) {
-        if (discount < 0 || discount > 1) {
-            throw new IllegalArgumentException("Discount has to be between 0 and 1 (0 - 100%)");
-        }
+    @BsonCreator
+    public ClientType(@BsonProperty double discount) {
         this.discount = discount;
-    }
-
-    public double getDiscount() {
-        return this.discount;
     }
 }
