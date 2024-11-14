@@ -1,5 +1,6 @@
 package repositories;
 
+import com.mongodb.WriteConcern;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
@@ -17,7 +18,7 @@ public class CustomerOrderRepository extends AbstractMongoRepository {
 
     public CustomerOrderRepository() {
         customerOrdersCollection = getMongoDatabase().getCollection("customerorders", CustomerOrder.class);
-        productRepository = new ProductRepository();
+        this.productRepository = new ProductRepository();
     }
 
     public void addCustomerOrder(Client client, List<Product> products) {
@@ -30,6 +31,22 @@ public class CustomerOrderRepository extends AbstractMongoRepository {
             }
 
             List<Product> availableProducts = new ArrayList<>();
+
+            MongoCollection<Client> clientsCollection = getMongoDatabase()
+                    .getCollection("clients", Client.class)
+                    .withWriteConcern(WriteConcern.MAJORITY);
+            if (clientsCollection.find(Filters.eq("_id", client.getEntityId())).first() == null) {
+                clientsCollection.insertOne(client);
+            }
+
+            MongoCollection<Product> productsCollection = getMongoDatabase()
+                    .getCollection("products", Product.class)
+                    .withWriteConcern(WriteConcern.MAJORITY);
+            for (Product product : products) {
+                if (productsCollection.find(Filters.eq("_id", product.getEntityId())).first() == null) {
+                    productsCollection.insertOne(product);
+                }
+            }
 
             for (Product product : products) {
                 Product lockedProduct = productRepository.getById(product.getEntityId());
@@ -60,6 +77,21 @@ public class CustomerOrderRepository extends AbstractMongoRepository {
     public void addCustomerOrder(Client client, Product product) {
         try (ClientSession session = getClientSession()) {
             session.startTransaction();
+
+            MongoCollection<Client> clientsCollection = getMongoDatabase()
+                    .getCollection("clients", Client.class)
+                    .withWriteConcern(WriteConcern.MAJORITY);
+            if (clientsCollection.find(Filters.eq("_id", client.getEntityId())).first() == null) {
+                clientsCollection.insertOne(client);
+            }
+
+            MongoCollection<Product> productsCollection = getMongoDatabase()
+                    .getCollection("products", Product.class)
+                    .withWriteConcern(WriteConcern.MAJORITY);
+
+            if (productsCollection.find(Filters.eq("_id", product.getEntityId())).first() == null) {
+                productsCollection.insertOne(product);
+            }
 
             Product lockedProduct = productRepository.getById(product.getEntityId());
             if (lockedProduct == null || !lockedProduct.isAvailable()) {
@@ -95,5 +127,9 @@ public class CustomerOrderRepository extends AbstractMongoRepository {
 
     public List<CustomerOrder> getAllOrders() {
         return customerOrdersCollection.find().into(new ArrayList<>());
+    }
+
+    public void dropCollection() {
+        customerOrdersCollection.drop();
     }
 }

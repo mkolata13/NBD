@@ -5,7 +5,8 @@ import model.Product;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class ProductRepositoryTest {
@@ -18,8 +19,9 @@ public class ProductRepositoryTest {
     }
 
     @BeforeEach
+    @AfterAll
     public void cleanup() {
-        productRepository.getAllProducts().forEach(product -> productRepository.deleteProduct(product.getEntityId()));
+        productRepository.dropCollection();
     }
 
     @Test
@@ -28,8 +30,8 @@ public class ProductRepositoryTest {
         productRepository.addProduct(product);
 
         List<Product> products = productRepository.getAllProducts();
-        assertEquals(1, products.size());
-        assertEquals("Apple", products.get(0).getName());
+        assertThat(products, hasSize(1));
+        assertThat(products.get(0).getName(), equalTo("Apple"));
     }
 
     @Test
@@ -39,8 +41,8 @@ public class ProductRepositoryTest {
 
         Product foundProduct = productRepository.getById(product.getEntityId());
 
-        assertNotNull(foundProduct);
-        assertEquals(product.getEntityId(), foundProduct.getEntityId());
+        assertThat(foundProduct, notNullValue());
+        assertThat(foundProduct.getEntityId(), equalTo(product.getEntityId()));
     }
 
     @Test
@@ -51,8 +53,8 @@ public class ProductRepositoryTest {
 
         Product foundProduct = productRepository.getById(product.getEntityId());
 
-        assertNull(foundProduct);
-        assertTrue(productRepository.getAllProducts().isEmpty());
+        assertThat(foundProduct, nullValue());
+        assertThat(productRepository.getAllProducts(), empty());
     }
 
     @Test
@@ -64,7 +66,7 @@ public class ProductRepositoryTest {
 
         Product updatedProduct = productRepository.getById(product.getEntityId());
 
-        assertEquals(4, updatedProduct.getQuantity());
+        assertThat(updatedProduct.getQuantity(), equalTo(4));
     }
 
     @Test
@@ -75,6 +77,7 @@ public class ProductRepositoryTest {
         productRepository.setProductUnAvailability(product.getEntityId());
 
         Product updatedProduct = productRepository.getById(product.getEntityId());
-        assertFalse(updatedProduct.isAvailable());
+
+        assertThat(updatedProduct.isAvailable(), is(false));
     }
 }

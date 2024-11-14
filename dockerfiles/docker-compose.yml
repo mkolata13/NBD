@@ -70,7 +70,7 @@ services:
       mongo_3:
         condition: service_healthy
     command: >
-      sleep 10 && mongosh --host mongodb1:27017 --username admin --password adminpassword --authenticationDatabase admin --eval
+      mongosh --host mongodb1:27017 --username admin --password adminpassword --authenticationDatabase admin --eval
       '
       rs.initiate(
                {

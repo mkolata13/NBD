@@ -7,7 +7,9 @@ import org.junit.jupiter.api.*;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ClientRepositoryTest {
@@ -20,8 +22,9 @@ class ClientRepositoryTest {
     }
 
     @BeforeEach
+    @AfterAll
     public void cleanup() {
-        clientRepository.getAllClients().forEach(client -> clientRepository.deleteClient(client.getEntityId()));
+        clientRepository.dropCollection();
     }
 
     @Test
@@ -30,8 +33,8 @@ class ClientRepositoryTest {
         clientRepository.addClient(client);
 
         List<Client> clients = clientRepository.getAllClients();
-        assertEquals(1, clients.size());
-        assertEquals(client.getEntityId(), clients.get(0).getEntityId());
+        assertThat(clients, hasSize(1));
+        assertThat(clients, hasItem(hasProperty("entityId", is(client.getEntityId()))));
     }
 
     @Test
@@ -41,13 +44,13 @@ class ClientRepositoryTest {
 
         clientRepository.addClient(client);
         clientRepository.addClient(deletedClient);
-        assertEquals(2, clientRepository.getAllClients().size());
+        assertThat(clientRepository.getAllClients(), hasSize(2));
 
         clientRepository.deleteClient(deletedClient.getEntityId());
         List<Client> clients = clientRepository.getAllClients();
 
-        assertEquals(1, clients.size());
-        assertEquals(client.getEntityId(), clients.get(0).getEntityId());
+        assertThat(clients, hasSize(1));
+        assertThat(clients, hasItem(hasProperty("entityId", is(client.getEntityId()))));
     }
 
     @Test
@@ -57,6 +60,6 @@ class ClientRepositoryTest {
 
         clientRepository.setClientType(client.getEntityId(), new ClientTypeGold());
 
-        assertEquals(ClientTypeGold.class, clientRepository.getClientById(client.getEntityId()).getClientType().getClass());
+        assertSame(ClientTypeGold.class, clientRepository.getClientById(client.getEntityId()).getClientType().getClass());
     }
 }

@@ -5,7 +5,7 @@ import model.ClientTypeSilver;
 import org.junit.jupiter.api.*;
 import repositories.ClientRepository;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ClientTypeCodecTest {
@@ -18,8 +18,9 @@ class ClientTypeCodecTest {
     }
 
     @BeforeEach
+    @AfterAll
     public void cleanup() {
-        clientRepository.getAllClients().forEach(client -> clientRepository.deleteClient(client.getEntityId()));
+        clientRepository.dropCollection();
     }
 
     @Test
@@ -32,8 +33,8 @@ class ClientTypeCodecTest {
         clientRepository.addClient(clientSilver);
         clientRepository.addClient(clientGold);
 
-        assertEquals(ClientTypeDefault.class, clientRepository.getClientById(clientDefault.getEntityId()).getClientType().getClass());
-        assertEquals(ClientTypeSilver.class, clientRepository.getClientById(clientSilver.getEntityId()).getClientType().getClass());
-        assertEquals(ClientTypeGold.class, clientRepository.getClientById(clientGold.getEntityId()).getClientType().getClass());
+        assertSame(ClientTypeDefault.class, clientRepository.getClientById(clientDefault.getEntityId()).getClientType().getClass());
+        assertSame(ClientTypeSilver.class, clientRepository.getClientById(clientSilver.getEntityId()).getClientType().getClass());
+        assertSame(ClientTypeGold.class, clientRepository.getClientById(clientGold.getEntityId()).getClientType().getClass());
     }
 }

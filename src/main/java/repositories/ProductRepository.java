@@ -54,4 +54,8 @@ public class ProductRepository extends AbstractMongoRepository {
     public List<Product> getAllProducts() {
         return productsCollection.find().into(new ArrayList<>());
     }
+
+    public void dropCollection() {
+        productsCollection.drop();
+    }
 }

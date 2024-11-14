@@ -53,4 +53,8 @@ public class ClientRepository extends AbstractMongoRepository {
     public List<Client> getAllClients() {
         return clientsCollection.find().into(new ArrayList<>());
     }
+
+    public void dropCollection() {
+        clientsCollection.drop();
+    }
 }

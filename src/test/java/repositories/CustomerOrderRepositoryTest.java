@@ -7,6 +7,9 @@ import org.junit.jupiter.api.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -24,9 +27,11 @@ class CustomerOrderRepositoryTest {
     }
 
     @BeforeEach
+    @AfterAll
     public void cleanup() {
-        customerOrderRepository.getAllOrders().forEach(customerOrder -> customerOrderRepository.deleteCustomerOrder(customerOrder.getEntityId()));
-        productRepository.getAllProducts().forEach(product -> productRepository.deleteProduct(product.getEntityId()));
+        customerOrderRepository.dropCollection();
+        productRepository.dropCollection();
+        clientRepository.dropCollection();
     }
 
     @Test
@@ -39,9 +44,9 @@ class CustomerOrderRepositoryTest {
         customerOrderRepository.addCustomerOrder(client, product);
 
         List<CustomerOrder> orders = customerOrderRepository.getAllOrders();
-        assertEquals(1, orders.size());
-        assertEquals(1, orders.get(0).getProducts().size());
-        assertEquals(product.getEntityId(), orders.get(0).getProducts().get(0).getEntityId());
+        assertThat(orders, hasSize(1));
+        assertThat(orders.get(0).getProducts(), hasSize(1));
+        assertThat(orders.get(0).getProducts(), hasItem(hasProperty("entityId", is(product.getEntityId()))));
     }
 
     @Test
@@ -56,10 +61,10 @@ class CustomerOrderRepositoryTest {
         customerOrderRepository.addCustomerOrder(client, List.of(product1, product2));
 
         List<CustomerOrder> orders = customerOrderRepository.getAllOrders();
-        assertEquals(1, orders.size());
-        assertEquals(2, orders.get(0).getProducts().size());
-        assertEquals(product1.getEntityId(), orders.get(0).getProducts().get(0).getEntityId());
-        assertEquals(product2.getEntityId(), orders.get(0).getProducts().get(1).getEntityId());
+        assertThat(orders, hasSize(1));
+        assertThat(orders.get(0).getProducts(), hasSize(2));
+        assertThat(orders.get(0).getProducts(), hasItem(hasProperty("entityId", is(product1.getEntityId()))));
+        assertThat(orders.get(0).getProducts(), hasItem(hasProperty("entityId", is(product2.getEntityId()))));
     }
 
     @Test
@@ -80,9 +85,12 @@ class CustomerOrderRepositoryTest {
 
         double baseProductsPrice = product1.getBasePrice() + product2.getBasePrice();
 
-        assertEquals(customerOrderRepository.getAllClientOrders(clientDefault.getEntityId()).get(0).getOrderPrice(), baseProductsPrice * (1 - clientDefault.getClientType().getDiscount()));
-        assertEquals(customerOrderRepository.getAllClientOrders(clientSilver.getEntityId()).get(0).getOrderPrice(), baseProductsPrice * (1 - clientSilver.getClientType().getDiscount()));
-        assertEquals(customerOrderRepository.getAllClientOrders(clientGold.getEntityId()).get(0).getOrderPrice(), baseProductsPrice * (1 - clientGold.getClientType().getDiscount()));
+        assertThat(customerOrderRepository.getAllClientOrders(clientDefault.getEntityId()).get(0).getOrderPrice(),
+                closeTo(baseProductsPrice * (1 - clientDefault.getClientType().getDiscount()), 0.01));
+        assertThat(customerOrderRepository.getAllClientOrders(clientSilver.getEntityId()).get(0).getOrderPrice(),
+                closeTo(baseProductsPrice * (1 - clientSilver.getClientType().getDiscount()), 0.01));
+        assertThat(customerOrderRepository.getAllClientOrders(clientGold.getEntityId()).get(0).getOrderPrice(),
+                closeTo(baseProductsPrice * (1 - clientGold.getClientType().getDiscount()), 0.01));
     }
 
     @Test
@@ -97,7 +105,7 @@ class CustomerOrderRepositoryTest {
         List<CustomerOrder> orders = customerOrderRepository.getAllClientOrders(client.getEntityId());
         Client clientFromDB = clientRepository.getClientById(client.getEntityId());
 
-        assertEquals(orders.get(0).getClient().getEntityId(), clientFromDB.getEntityId());
+        assertThat(orders.get(0).getClient().getEntityId(), equalTo(clientFromDB.getEntityId()));
     }
 
     @Test
@@ -113,8 +121,8 @@ class CustomerOrderRepositoryTest {
             customerOrderRepository.addCustomerOrder(client, product);
         });
 
-        assertEquals("Transaction failed: Product " + product.getEntityId() + " is unavailable and cannot be ordered.",
-                exception.getMessage());
+        assertThat(exception.getMessage(), is("Transaction failed: Product " + product.getEntityId()
+                + " is unavailable and cannot be ordered."));
     }
 
     @Test
@@ -130,8 +138,8 @@ class CustomerOrderRepositoryTest {
 
         List<CustomerOrder> orders = customerOrderRepository.getAllClientOrders(client.getEntityId());
 
-        assertEquals(1, orders.get(0).getProducts().size());
-        assertEquals(productAvailable.getEntityId(), orders.get(0).getProducts().get(0).getEntityId());
+        assertThat(orders.get(0).getProducts(), hasSize(1));
+        assertThat(orders.get(0).getProducts().get(0).getEntityId(), equalTo(productAvailable.getEntityId()));
     }
 
     @Test
@@ -147,7 +155,7 @@ class CustomerOrderRepositoryTest {
         CustomerOrder foundOrder = customerOrderRepository.getById(orderId);
 
         assertNull(foundOrder);
-        assertTrue(customerOrderRepository.getAllOrders().isEmpty());
+        assertThat(customerOrderRepository.getAllOrders(), empty());
     }
 
     @Test
@@ -159,7 +167,7 @@ class CustomerOrderRepositoryTest {
             customerOrderRepository.addCustomerOrder(client, products);
         });
 
-        assertEquals("Transaction failed: Order cannot be empty", exception.getMessage());
+        assertThat(exception.getMessage(), is("Transaction failed: Order cannot be empty"));
     }
 
     @Test
@@ -175,6 +183,6 @@ class CustomerOrderRepositoryTest {
             customerOrderRepository.addCustomerOrder(client, List.of(product1, product2));
         });
 
-        assertEquals("Transaction failed: No products are available for ordering.", exception.getMessage());
+        assertThat(exception.getMessage(), is("Transaction failed: No products are available for ordering."));
     }
 }
