@@ -27,7 +27,6 @@ class CustomerOrderRepositoryTest {
     }
 
     @BeforeEach
-    @AfterAll
     public void cleanup() {
         customerOrderRepository.dropCollection();
         productRepository.dropCollection();
@@ -40,6 +39,7 @@ class CustomerOrderRepositoryTest {
         Product product = new Product("Product A", 15.0, 1.5, 5, "High-quality item A");
 
         productRepository.addProduct(product);
+        clientRepository.addClient(client);
 
         customerOrderRepository.addCustomerOrder(client, product);
 
@@ -57,6 +57,8 @@ class CustomerOrderRepositoryTest {
 
         productRepository.addProduct(product1);
         productRepository.addProduct(product2);
+
+        clientRepository.addClient(client);
 
         customerOrderRepository.addCustomerOrder(client, List.of(product1, product2));
 

@@ -42,7 +42,7 @@ public class ProductRepositoryTest {
         Product foundProduct = productRepository.getById(product.getEntityId());
 
         assertThat(foundProduct, notNullValue());
-        assertThat(foundProduct.getEntityId(), equalTo(product.getEntityId()));
+        assertThat(foundProduct, is(equalTo(product)));
     }
 
     @Test

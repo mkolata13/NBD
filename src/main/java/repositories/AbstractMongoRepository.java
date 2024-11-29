@@ -13,6 +13,7 @@ import lombok.Setter;
 import org.bson.UuidRepresentation;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.jsr310.Jsr310CodecProvider;
 import org.bson.codecs.pojo.Conventions;
 import org.bson.codecs.pojo.PojoCodecProvider;
 
@@ -43,6 +44,7 @@ public abstract class AbstractMongoRepository implements AutoCloseable {
                 .uuidRepresentation(UuidRepresentation.STANDARD)
                 .codecRegistry(CodecRegistries.fromRegistries(
                         CodecRegistries.fromProviders(new CustomCodecProvider()),
+                        CodecRegistries.fromProviders(new Jsr310CodecProvider()),
                         CodecRegistries.fromProviders(PojoCodecProvider.builder().build()),
                         MongoClientSettings.getDefaultCodecRegistry(),
                         pojoCodecRegistry

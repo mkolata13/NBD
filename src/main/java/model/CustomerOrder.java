@@ -2,6 +2,8 @@ package model;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.bson.types.ObjectId;
@@ -71,5 +73,33 @@ public class CustomerOrder extends AbstractEntity {
 
     private void setDiscountedPrice(double price) {
         this.orderPrice *= (1 - client.getClientType().getDiscount());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        CustomerOrder that = (CustomerOrder) o;
+
+        return new EqualsBuilder()
+                .append(orderPrice, that.orderPrice)
+                .append(orderDate, that.orderDate)
+                .append(client, that.client)
+                .append(products, that.products).isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(orderDate)
+                .append(orderPrice)
+                .append(client)
+                .append(products).toHashCode();
     }
 }

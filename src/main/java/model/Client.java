@@ -2,6 +2,8 @@ package model;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.bson.types.ObjectId;
@@ -41,5 +43,33 @@ public class Client extends AbstractEntity {
         this.lastName = lastName;
         this.phoneNumber = phoneNumber;
         this.clientType = clientType;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        Client client = (Client) o;
+
+        return new EqualsBuilder()
+                .append(firstName, client.firstName)
+                .append(lastName, client.lastName)
+                .append(phoneNumber, client.phoneNumber)
+                .append(clientType, client.clientType).isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(firstName)
+                .append(lastName)
+                .append(phoneNumber)
+                .append(clientType).toHashCode();
     }
 }

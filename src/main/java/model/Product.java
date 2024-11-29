@@ -1,6 +1,7 @@
 package model;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonProperty;
@@ -9,6 +10,7 @@ import org.bson.types.ObjectId;
 
 @Getter
 @Setter
+@NoArgsConstructor
 public class Product extends AbstractEntity {
 
     @BsonProperty("name")
@@ -53,5 +55,35 @@ public class Product extends AbstractEntity {
         this.quantity = quantity;
         this.description = description;
         this.isAvailable = quantity > 0;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        Product product = (Product) o;
+
+        return new org.apache.commons.lang3.builder.EqualsBuilder()
+                .append(basePrice, product.basePrice).append(weight, product.weight)
+                .append(quantity, product.quantity).append(isAvailable, product.isAvailable)
+                .append(name, product.name)
+                .append(description, product.description).isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new org.apache.commons.lang3.builder.HashCodeBuilder(17, 37)
+                .append(name)
+                .append(basePrice)
+                .append(weight)
+                .append(quantity)
+                .append(description)
+                .append(isAvailable).toHashCode();
     }
 }
