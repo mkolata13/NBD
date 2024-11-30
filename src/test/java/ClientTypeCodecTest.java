@@ -4,6 +4,7 @@ import model.ClientTypeGold;
 import model.ClientTypeSilver;
 import org.junit.jupiter.api.*;
 import repositories.ClientRepository;
+import repositories.mongodb.ClientRepositoryMongo;
 
 import static org.junit.jupiter.api.Assertions.assertSame;
 
@@ -14,7 +15,7 @@ class ClientTypeCodecTest {
 
     @BeforeAll
     public void setup() {
-        clientRepository = new ClientRepository();
+        clientRepository = new ClientRepositoryMongo();
     }
 
     @BeforeEach

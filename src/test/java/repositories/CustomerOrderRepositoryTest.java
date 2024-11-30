@@ -3,6 +3,9 @@ package repositories;
 import model.*;
 import org.bson.types.ObjectId;
 import org.junit.jupiter.api.*;
+import repositories.mongodb.ClientRepositoryMongo;
+import repositories.mongodb.CustomerOrderRepositoryMongo;
+import repositories.mongodb.ProductRepositoryMongo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,9 +24,9 @@ class CustomerOrderRepositoryTest {
 
     @BeforeAll
     public void setup() {
-        customerOrderRepository = new CustomerOrderRepository();
-        productRepository = new ProductRepository();
-        clientRepository = new ClientRepository();
+        customerOrderRepository = new CustomerOrderRepositoryMongo();
+        productRepository = new ProductRepositoryMongo();
+        clientRepository = new ClientRepositoryMongo();
     }
 
     @BeforeEach

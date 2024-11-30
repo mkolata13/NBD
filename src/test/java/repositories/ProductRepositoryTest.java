@@ -2,6 +2,8 @@ package repositories;
 
 import org.junit.jupiter.api.*;
 import model.Product;
+import repositories.mongodb.ProductRepositoryMongo;
+import repositories.redis.ProductRepositoryCacheDecorator;
 
 import java.util.List;
 
@@ -15,7 +17,7 @@ public class ProductRepositoryTest {
 
     @BeforeAll
     public void setup() {
-        productRepository = new ProductRepository();
+        productRepository = new ProductRepositoryCacheDecorator(new ProductRepositoryMongo());
     }
 
     @BeforeEach

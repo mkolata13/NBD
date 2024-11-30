@@ -4,6 +4,8 @@ import model.Product;
 import org.bson.types.ObjectId;
 import org.openjdk.jmh.annotations.*;
 import repositories.ProductRepository;
+import repositories.mongodb.ProductRepositoryMongo;
+import repositories.redis.ProductRepositoryCacheDecorator;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -16,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 @State(Scope.Benchmark)
 public class BenchmarkRunner {
     private static final int NUM_OF_PRODUCTS = 1000;
-    private final ProductRepository productRepository = new ProductRepository();
+    private final ProductRepository productRepository = new ProductRepositoryCacheDecorator(new ProductRepositoryMongo());
 
     private final List<ObjectId> ids = new ArrayList<>();
     private boolean cacheClosed = false;
@@ -51,7 +53,6 @@ public class BenchmarkRunner {
     @TearDown
     public void cleanup() {
         productRepository.dropCollection();
-        productRepository.closeCache();
     }
 
     public static void main(String[] args) throws IOException {

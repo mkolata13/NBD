@@ -4,6 +4,7 @@ import model.Client;
 import model.ClientTypeGold;
 import model.ClientTypeSilver;
 import org.junit.jupiter.api.*;
+import repositories.mongodb.ClientRepositoryMongo;
 
 import java.util.List;
 
@@ -18,7 +19,7 @@ class ClientRepositoryTest {
 
     @BeforeAll
     public void setup() {
-        clientRepository = new ClientRepository();
+        clientRepository = new ClientRepositoryMongo();
     }
 
     @BeforeEach
