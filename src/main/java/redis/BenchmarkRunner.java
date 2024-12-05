@@ -12,13 +12,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-@Fork(value = 1, warmups = 1)
+@Fork(value = 2, warmups = 1)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
 public class BenchmarkRunner {
     private static final int NUM_OF_PRODUCTS = 1000;
-    private final ProductRepository productRepository = new ProductRepositoryCacheDecorator(new ProductRepositoryMongo());
+    private final ProductRepository productRepository = new ProductRepositoryCacheDecorator(
+        new ProductRepositoryMongo());
 
     private final List<ObjectId> ids = new ArrayList<>();
     private boolean cacheClosed = false;
@@ -55,7 +56,7 @@ public class BenchmarkRunner {
         productRepository.dropCollection();
     }
 
-    public static void main(String[] args) throws IOException {
+   public static void main(String[] args) throws IOException {
         org.openjdk.jmh.Main.main(args);
     }
 }
