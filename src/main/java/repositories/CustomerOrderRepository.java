@@ -3,23 +3,17 @@ package repositories;
 import model.Client;
 import model.CustomerOrder;
 import model.Product;
-import org.bson.types.ObjectId;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface CustomerOrderRepository {
 
-    void addCustomerOrder(Client client, List<Product> products);
+    boolean addCustomerOrder(Client client, List<Product> products);
 
-    void addCustomerOrder(Client client, Product product);
+    boolean addCustomerOrder(Client client, Product product);
 
-    void deleteCustomerOrder(ObjectId id);
+    List<CustomerOrder> getAllClientOrders(UUID id);
 
-    CustomerOrder getById(ObjectId id);
-
-    List<CustomerOrder> getAllClientOrders(ObjectId id);
-
-    List<CustomerOrder> getAllOrders();
-
-    void dropCollection();
+    List<CustomerOrder> getAllProductOrders(UUID id);
 }

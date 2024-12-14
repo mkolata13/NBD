@@ -1,21 +1,26 @@
 package model;
 
+import com.datastax.oss.driver.api.mapper.annotations.CqlName;
+import com.datastax.oss.driver.api.mapper.annotations.Entity;
+import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.bson.codecs.pojo.annotations.BsonCreator;
-import org.bson.codecs.pojo.annotations.BsonProperty;
 
 @NoArgsConstructor
 @Setter
 @Getter
-public abstract class ClientType {
+@Entity
+@CqlName("client_type")
+public class ClientType {
+    @PartitionKey
+    private String discriminator;
 
-    @BsonProperty("discount")
+    @CqlName("discount")
     protected double discount;
 
-    @BsonCreator
-    public ClientType(@BsonProperty double discount) {
+    public ClientType(String discriminator, double discount) {
+        this.discriminator = discriminator;
         this.discount = discount;
     }
 }

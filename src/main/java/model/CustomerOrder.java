@@ -1,78 +1,43 @@
 package model;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.bson.codecs.pojo.annotations.BsonCreator;
-import org.bson.codecs.pojo.annotations.BsonProperty;
-import org.bson.types.ObjectId;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-
+import java.time.Instant;
+import java.util.UUID;
 
 @Getter
 @Setter
-public class CustomerOrder extends AbstractEntity {
+@NoArgsConstructor
+public class CustomerOrder {
 
-    @BsonProperty("orderdate")
-    private LocalDateTime orderDate;
+    private UUID customerOrderId;
 
-    @BsonProperty("orderprice")
+    private UUID clientId;
+
+    private UUID productId;
+
+    private Instant orderDate;
+
     private double orderPrice = 0;
 
-    @BsonProperty("client")
-    private Client client;
-
-    @BsonProperty("products")
-    private List<Product> products;
-
-    @BsonCreator
-    public CustomerOrder(@BsonProperty("_id") ObjectId entityId,
-                         @BsonProperty("client")Client client,
-                         @BsonProperty("produtcts")List<Product> products,
-                         @BsonProperty("orderdate")LocalDateTime orderDate,
-                         @BsonProperty("orderPrice")double orderPrice) {
-        super(entityId);
-        this.client = client;
-        this.products = products;
+    public CustomerOrder(UUID clientId, UUID productId, Instant orderDate) {
+        this.customerOrderId = UUID.randomUUID();
         this.orderDate = orderDate;
+        this.clientId = clientId;
+        this.productId = productId;
+    }
+
+    public CustomerOrder(UUID id, UUID clientId, UUID productId, Instant orderDate, double orderPrice) {
+        this.customerOrderId = id;
+        this.orderDate = orderDate;
+        this.clientId = clientId;
+        this.productId = productId;
         this.orderPrice = orderPrice;
-    }
-
-    public CustomerOrder(Client client, List<Product> products) {
-        super(new ObjectId());
-        this.orderDate = LocalDateTime.now();
-        this.client = client;
-        this.products = products;
-        setPrice();
-        setDiscountedPrice(orderPrice);
-    }
-
-    public CustomerOrder(Client client, Product product) {
-        super(new ObjectId());
-        this.orderDate = LocalDateTime.now();
-        this.client = client;
-        this.products = new ArrayList<>();
-        if (product != null) {
-            this.products.add(product);
-        }
-        setPrice();
-        setDiscountedPrice(orderPrice);
-    }
-
-    private void setPrice() {
-        if (this.products != null) {
-            for (Product product : this.products) {
-                this.orderPrice += product.getBasePrice();
-            }
-        }
-    }
-
-    private void setDiscountedPrice(double price) {
-        this.orderPrice *= (1 - client.getClientType().getDiscount());
     }
 
     @Override
@@ -90,8 +55,8 @@ public class CustomerOrder extends AbstractEntity {
         return new EqualsBuilder()
                 .append(orderPrice, that.orderPrice)
                 .append(orderDate, that.orderDate)
-                .append(client, that.client)
-                .append(products, that.products).isEquals();
+                .append(clientId, that.clientId)
+                .append(productId, that.productId).isEquals();
     }
 
     @Override
@@ -99,7 +64,18 @@ public class CustomerOrder extends AbstractEntity {
         return new HashCodeBuilder(17, 37)
                 .append(orderDate)
                 .append(orderPrice)
-                .append(client)
-                .append(products).toHashCode();
+                .append(clientId)
+                .append(productId).toHashCode();
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("customerOrderId", customerOrderId)
+                .append("orderDate", orderDate)
+                .append("orderPrice", orderPrice)
+                .append("client", clientId)
+                .append("product", productId)
+                .toString();
     }
 }

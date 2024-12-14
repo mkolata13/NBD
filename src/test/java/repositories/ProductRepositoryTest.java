@@ -2,10 +2,7 @@ package repositories;
 
 import org.junit.jupiter.api.*;
 import model.Product;
-import repositories.mongodb.ProductRepositoryMongo;
-import repositories.redis.ProductRepositoryCacheDecorator;
-
-import java.util.List;
+import repositories.cassandra.CassandraProductRepository;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -17,23 +14,13 @@ public class ProductRepositoryTest {
 
     @BeforeAll
     public void setup() {
-        productRepository = new ProductRepositoryCacheDecorator(new ProductRepositoryMongo());
-    }
-
-    @BeforeEach
-    @AfterAll
-    public void cleanup() {
-        productRepository.dropCollection();
+        productRepository = new CassandraProductRepository();
     }
 
     @Test
     public void testAddProduct() {
         Product product = new Product("Apple", 10, 2, 3, "abcdefgh");
-        productRepository.addProduct(product);
-
-        List<Product> products = productRepository.getAllProducts();
-        assertThat(products, hasSize(1));
-        assertThat(products.get(0).getName(), equalTo("Apple"));
+        assertThat(productRepository.addProduct(product), equalTo(true));
     }
 
     @Test
@@ -41,7 +28,7 @@ public class ProductRepositoryTest {
         Product product = new Product("Apple", 10, 2, 3, "abcdefgh");
         productRepository.addProduct(product);
 
-        Product foundProduct = productRepository.getById(product.getEntityId());
+        Product foundProduct = productRepository.getById(product.getProductId());
 
         assertThat(foundProduct, notNullValue());
         assertThat(foundProduct, is(equalTo(product)));
@@ -51,35 +38,18 @@ public class ProductRepositoryTest {
     public void testDeleteProduct() {
         Product product = new Product("Apple", 10, 2, 3, "abcdefgh");
         productRepository.addProduct(product);
-        productRepository.deleteProduct(product.getEntityId());
 
-        Product foundProduct = productRepository.getById(product.getEntityId());
-
-        assertThat(foundProduct, nullValue());
-        assertThat(productRepository.getAllProducts(), empty());
+        assertThat(productRepository.deleteProduct(product), equalTo(true));
     }
 
     @Test
-    public void testDecrementQuantityOfProduct() {
-        Product product = new Product("Apple", 10, 2, 5, "abcdefgh");
-        productRepository.addProduct(product);
-
-        productRepository.decrementQuantityOfProduct(product.getEntityId());
-
-        Product updatedProduct = productRepository.getById(product.getEntityId());
-
-        assertThat(updatedProduct.getQuantity(), equalTo(4));
-    }
-
-    @Test
-    public void testSetProductUnAvailability() {
+    public void testUpdateProduct() {
         Product product = new Product("Apple", 10, 2, 3, "abcdefgh");
         productRepository.addProduct(product);
 
-        productRepository.setProductUnAvailability(product.getEntityId());
+        product.setName("Banana");
+        productRepository.updateProduct(product);
 
-        Product updatedProduct = productRepository.getById(product.getEntityId());
-
-        assertThat(updatedProduct.isAvailable(), is(false));
+        assertThat(productRepository.getById(product.getProductId()), equalTo(product));
     }
 }

@@ -1,48 +1,63 @@
 package model;
 
+import com.datastax.oss.driver.api.mapper.annotations.CqlName;
+import com.datastax.oss.driver.api.mapper.annotations.Entity;
+import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
+import com.datastax.oss.driver.api.mapper.annotations.PropertyStrategy;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.bson.codecs.pojo.annotations.BsonCreator;
-import org.bson.codecs.pojo.annotations.BsonProperty;
-import org.bson.types.ObjectId;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
+import java.util.UUID;
 
 @Getter
 @Setter
-public class Client extends AbstractEntity {
+@NoArgsConstructor
+@Entity
+@CqlName("clients")
+@PropertyStrategy(mutable = true)
+public class Client {
+    @PartitionKey
+    @CqlName("client_id")
+    private UUID clientId;
 
-    @BsonProperty("firstname")
+    @CqlName("first_name")
     private String firstName;
 
-    @BsonProperty("lastname")
+    @CqlName("last_name")
     private String lastName;
 
-    @BsonProperty("phonenumber")
+    @CqlName("phone_number")
     private String phoneNumber;
 
-    @BsonProperty("client_type")
-    ClientType clientType;
+    @CqlName("type")
+    private String type;
 
-    @BsonCreator
-    public Client(@BsonProperty("_id") ObjectId entityId,
-                  @BsonProperty("firstname") String firstName,
-                  @BsonProperty("lastname") String lastName,
-                  @BsonProperty("phonenumber") String phoneNumber,
-                  @BsonProperty("client_type") ClientType clientType) {
-        super(entityId);
+    public Client(String firstName, String lastName, String phoneNumber, String type) {
+        this.clientId = UUID.randomUUID();
         this.firstName = firstName;
         this.lastName = lastName;
         this.phoneNumber = phoneNumber;
-        this.clientType = clientType;
+        this.type = type;
     }
 
-    public Client(String firstName, String lastName, String phoneNumber, ClientType clientType) {
-        super(new ObjectId());
+    public Client(UUID id, String firstName, String lastName, String phoneNumber, String type) {
+        this.clientId = id;
         this.firstName = firstName;
         this.lastName = lastName;
         this.phoneNumber = phoneNumber;
-        this.clientType = clientType;
+        this.type = type;
+    }
+
+    public double getDiscount() {
+        return switch (type.toLowerCase()) {
+            case "gold" -> new ClientTypeGold().getDiscount();
+            case "silver" -> new ClientTypeSilver().getDiscount();
+            default -> new ClientTypeDefault().getDiscount();
+        };
     }
 
     @Override
@@ -61,7 +76,7 @@ public class Client extends AbstractEntity {
                 .append(firstName, client.firstName)
                 .append(lastName, client.lastName)
                 .append(phoneNumber, client.phoneNumber)
-                .append(clientType, client.clientType).isEquals();
+                .append(type, client.type).isEquals();
     }
 
     @Override
@@ -70,6 +85,17 @@ public class Client extends AbstractEntity {
                 .append(firstName)
                 .append(lastName)
                 .append(phoneNumber)
-                .append(clientType).toHashCode();
+                .append(type).toHashCode();
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("clientId", clientId)
+                .append("firstName", firstName)
+                .append("lastName", lastName)
+                .append("phoneNumber", phoneNumber)
+                .append("type", type)
+                .toString();
     }
 }

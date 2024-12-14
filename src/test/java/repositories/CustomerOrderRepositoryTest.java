@@ -1,193 +1,164 @@
 package repositories;
 
-import model.*;
-import org.bson.types.ObjectId;
-import org.junit.jupiter.api.*;
-import repositories.mongodb.ClientRepositoryMongo;
-import repositories.mongodb.CustomerOrderRepositoryMongo;
-import repositories.mongodb.ProductRepositoryMongo;
+import model.Client;
+import model.Product;
+import model.CustomerOrder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import repositories.cassandra.CassandraClientRepository;
+import repositories.cassandra.CassandraCustomerOrderRepository;
+import repositories.cassandra.CassandraProductRepository;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CustomerOrderRepositoryTest {
 
     private CustomerOrderRepository customerOrderRepository;
     private ProductRepository productRepository;
     private ClientRepository clientRepository;
 
-    @BeforeAll
-    public void setup() {
-        customerOrderRepository = new CustomerOrderRepositoryMongo();
-        productRepository = new ProductRepositoryMongo();
-        clientRepository = new ClientRepositoryMongo();
-    }
-
     @BeforeEach
-    public void cleanup() {
-        customerOrderRepository.dropCollection();
-        productRepository.dropCollection();
-        clientRepository.dropCollection();
+    public void setup() {
+        customerOrderRepository = new CassandraCustomerOrderRepository();
+        productRepository = new CassandraProductRepository();
+        clientRepository = new CassandraClientRepository();
     }
 
     @Test
-    public void testAddCustomerOrder() {
-        Client client = new Client("Jane", "Doe", "123456789", new ClientTypeDefault());
-        Product product = new Product("Product A", 15.0, 1.5, 5, "High-quality item A");
-
-        productRepository.addProduct(product);
-        clientRepository.addClient(client);
-
-        customerOrderRepository.addCustomerOrder(client, product);
-
-        List<CustomerOrder> orders = customerOrderRepository.getAllOrders();
-        assertThat(orders, hasSize(1));
-        assertThat(orders.get(0).getProducts(), hasSize(1));
-        assertThat(orders.get(0).getProducts(), hasItem(hasProperty("entityId", is(product.getEntityId()))));
-    }
-
-    @Test
-    public void testAddCustomerOrderWithMultipleProducts() {
-        Client client = new Client("Jane", "Doe", "123456789", new ClientTypeDefault());
-        Product product1 = new Product("Product A", 15.0, 1.5, 10, "High-quality item A");
-        Product product2 = new Product("Product B", 10.0, 1.5, 5, "High-quality item B");
-
-        productRepository.addProduct(product1);
-        productRepository.addProduct(product2);
-
-        clientRepository.addClient(client);
-
-        customerOrderRepository.addCustomerOrder(client, List.of(product1, product2));
-
-        List<CustomerOrder> orders = customerOrderRepository.getAllOrders();
-        assertThat(orders, hasSize(1));
-        assertThat(orders.get(0).getProducts(), hasSize(2));
-        assertThat(orders.get(0).getProducts(), hasItem(hasProperty("entityId", is(product1.getEntityId()))));
-        assertThat(orders.get(0).getProducts(), hasItem(hasProperty("entityId", is(product2.getEntityId()))));
-    }
-
-    @Test
-    public void testOrderPriceWithAllClientTypes() {
-        Client clientDefault = new Client("Janusz", "Kowalski", "123456789", new ClientTypeDefault());
-        Client clientSilver = new Client("Jan", "Nowak", "123456789", new ClientTypeSilver());
-        Client clientGold = new Client("Tomasz", "Kowalski", "123456789", new ClientTypeGold());
-
-        Product product1 = new Product("Product A", 20.0, 1.5, 10, "High-quality item A");
-        Product product2 = new Product("Product B", 10.0, 1.5, 10, "High-quality item B");
-
-        productRepository.addProduct(product1);
-        productRepository.addProduct(product2);
-
-        customerOrderRepository.addCustomerOrder(clientDefault, List.of(product1, product2));
-        customerOrderRepository.addCustomerOrder(clientSilver, List.of(product1, product2));
-        customerOrderRepository.addCustomerOrder(clientGold, List.of(product1, product2));
-
-        double baseProductsPrice = product1.getBasePrice() + product2.getBasePrice();
-
-        assertThat(customerOrderRepository.getAllClientOrders(clientDefault.getEntityId()).get(0).getOrderPrice(),
-                closeTo(baseProductsPrice * (1 - clientDefault.getClientType().getDiscount()), 0.01));
-        assertThat(customerOrderRepository.getAllClientOrders(clientSilver.getEntityId()).get(0).getOrderPrice(),
-                closeTo(baseProductsPrice * (1 - clientSilver.getClientType().getDiscount()), 0.01));
-        assertThat(customerOrderRepository.getAllClientOrders(clientGold.getEntityId()).get(0).getOrderPrice(),
-                closeTo(baseProductsPrice * (1 - clientGold.getClientType().getDiscount()), 0.01));
-    }
-
-    @Test
-    public void testClientIdEqualCustomerOrderClientId() {
-        Client client = new Client("Janusz", "Kowalski", "123456789", new ClientTypeDefault());
-        Product product = new Product("Product A", 15.0, 1.5, 10, "High-quality item A");
+    public void testAddCustomerOrder_SingleProduct() {
+        Client client = new Client("John", "Doe", "123456789", "gold");
+        Product product = new Product("Test Product", 50.0, 2.0, 5, "Sample description");
 
         clientRepository.addClient(client);
         productRepository.addProduct(product);
-        customerOrderRepository.addCustomerOrder(client, product);
 
-        List<CustomerOrder> orders = customerOrderRepository.getAllClientOrders(client.getEntityId());
-        Client clientFromDB = clientRepository.getClientById(client.getEntityId());
+        boolean result = customerOrderRepository.addCustomerOrder(client, product);
 
-        assertThat(orders.get(0).getClient().getEntityId(), equalTo(clientFromDB.getEntityId()));
+        assertThat(result, equalTo(true));
+
+        List<CustomerOrder> clientOrders = customerOrderRepository.getAllClientOrders(client.getClientId());
+        System.out.println(clientOrders.get(0).toString());
+        assertThat(clientOrders, hasItem(
+                allOf(
+                        hasProperty("clientId", equalTo(client.getClientId())),
+                        hasProperty("productId", equalTo(product.getProductId()))
+                )
+        ));
+
+        List<CustomerOrder> productOrders = customerOrderRepository.getAllProductOrders(product.getProductId());
+        assertThat(productOrders, hasItem(
+                allOf(
+                        hasProperty("clientId", equalTo(client.getClientId())),
+                        hasProperty("productId", equalTo(product.getProductId()))
+                )
+        ));
     }
 
     @Test
-    public void testCustomerOrderWithNoProductAvailable() {
-        Client client = new Client("Tomasz", "Kowalski", "123456789", new ClientTypeGold());
-        Product product = new Product("Product A", 20.0, 1.5, 1, "High-quality item A");
+    public void testAddCustomerOrder_MultipleProducts() {
+        Client client = new Client("Jane", "Doe", "987654321", "default");
+        Product product1 = new Product("Product 1", 110.0, 1.0, 10, "Description 1");
+        Product product2 = new Product("Product 2", 110.0, 1.5, 8, "Description 2");
 
-        productRepository.addProduct(product);
-
-        customerOrderRepository.addCustomerOrder(client, product);
-
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            customerOrderRepository.addCustomerOrder(client, product);
-        });
-
-        assertThat(exception.getMessage(), is("Transaction failed: Product " + product.getEntityId()
-                + " is unavailable and cannot be ordered."));
-    }
-
-    @Test
-    public void testCustomerOrderWithAvailableAndUnavailableProducts() {
-        Client client = new Client("Tomasz", "Kowalski", "123456789", new ClientTypeGold());
-        Product productAvailable = new Product("Product A", 20.0, 1.5, 1, "High-quality item A");
-        Product productUnavailable = new Product("Product B", 10.0, 1.5, 0, "High-quality item B");
-
-        productRepository.addProduct(productAvailable);
-        productRepository.addProduct(productUnavailable);
-
-        customerOrderRepository.addCustomerOrder(client, List.of(productAvailable, productUnavailable));
-
-        List<CustomerOrder> orders = customerOrderRepository.getAllClientOrders(client.getEntityId());
-
-        assertThat(orders.get(0).getProducts(), hasSize(1));
-        assertThat(orders.get(0).getProducts().get(0).getEntityId(), equalTo(productAvailable.getEntityId()));
-    }
-
-    @Test
-    public void testDeleteCustomerOrder() {
-        Client client = new Client("Janusz", "Kowalski", "123456789", new ClientTypeDefault());
-        Product product = new Product("Apple", 10, 2, 3, "abcdefgh");
-        productRepository.addProduct(product);
-
-        customerOrderRepository.addCustomerOrder(client, product);
-        ObjectId orderId = customerOrderRepository.getAllClientOrders(client.getEntityId()).get(0).getEntityId();
-        customerOrderRepository.deleteCustomerOrder(orderId);
-
-        CustomerOrder foundOrder = customerOrderRepository.getById(orderId);
-
-        assertNull(foundOrder);
-        assertThat(customerOrderRepository.getAllOrders(), empty());
-    }
-
-    @Test
-    public void testEmptyProductListOrder() {
-        Client client = new Client("Tomasz", "Kowalski", "123456789", new ClientTypeGold());
-        List<Product> products = new ArrayList<>();
-
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            customerOrderRepository.addCustomerOrder(client, products);
-        });
-
-        assertThat(exception.getMessage(), is("Transaction failed: Order cannot be empty"));
-    }
-
-    @Test
-    public void testCustomerOrderWithUnavailableProductList() {
-        Client client = new Client("Tomasz", "Kowalski", "123456789", new ClientTypeGold());
-        Product product1 = new Product("Product A", 20.0, 1.5, 0, "High-quality item A");
-        Product product2 = new Product("Product B", 10.0, 1.5, 0, "High-quality item B");
-
+        clientRepository.addClient(client);
         productRepository.addProduct(product1);
         productRepository.addProduct(product2);
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            customerOrderRepository.addCustomerOrder(client, List.of(product1, product2));
-        });
+        boolean result = customerOrderRepository.addCustomerOrder(client, List.of(product1, product2));
+        assertThat(result, equalTo(true));
 
-        assertThat(exception.getMessage(), is("Transaction failed: No products are available for ordering."));
+        List<CustomerOrder> clientOrders = customerOrderRepository.getAllClientOrders(client.getClientId());
+
+        assertThat(clientOrders, hasSize(2)); // Dwa produkty powinny być w zamówieniu
+
+        assertThat(clientOrders, hasItem(hasProperty("productId", equalTo(product1.getProductId()))));
+        assertThat(clientOrders, hasItem(hasProperty("productId", equalTo(product2.getProductId()))));
+
+        List<CustomerOrder> product1Orders = customerOrderRepository.getAllProductOrders(product1.getProductId());
+        assertThat(product1Orders, hasItem(hasProperty("clientId", equalTo(client.getClientId()))));
+
+        List<CustomerOrder> product2Orders = customerOrderRepository.getAllProductOrders(product2.getProductId());
+        assertThat(product2Orders, hasItem(hasProperty("clientId", equalTo(client.getClientId()))));
+    }
+
+    @Test
+    public void testGetAllClientOrders() {
+        Client client = new Client("Mark", "Smith", "654654654", "default");
+        Product product = new Product("Unique Product", 20.0, 2.0, 1, "Unique description");
+
+        clientRepository.addClient(client);
+        productRepository.addProduct(product);
+
+        customerOrderRepository.addCustomerOrder(client, product);
+
+        List<CustomerOrder> clientOrders = customerOrderRepository.getAllClientOrders(client.getClientId());
+
+        assertThat(clientOrders, hasItem(
+                allOf(
+                        hasProperty("clientId", equalTo(client.getClientId())),
+                        hasProperty("productId", equalTo(product.getProductId()))
+                )
+        ));
+    }
+
+    @Test
+    public void testGetAllProductOrders() {
+        Client client = new Client("Alice", "Brown", "789789789", "gold");
+        Product product = new Product("Special Product", 60.0, 3.0, 5, "Special description");
+        clientRepository.addClient(client);
+        productRepository.addProduct(product);
+
+        customerOrderRepository.addCustomerOrder(client, product);
+
+        List<CustomerOrder> productOrders = customerOrderRepository.getAllProductOrders(product.getProductId());
+
+        assertThat(productOrders, hasItem(
+                allOf(
+                        hasProperty("clientId", equalTo(client.getClientId())),
+                        hasProperty("productId", equalTo(product.getProductId()))
+                )
+        ));
+    }
+
+    @Test
+    public void testAddCustomerOrder_EmptyOrder() {
+        Client client = new Client("Mark", "Smith", "654654654", "default");
+        clientRepository.addClient(client);
+
+        Exception exception = assertThrows(RuntimeException.class, () -> customerOrderRepository.addCustomerOrder(client, List.of()));
+
+        assertThat(exception.getMessage(), containsString("Products in customer order cannot be empty."));
+    }
+
+    @Test
+    public void testAddCustomerOrder_ProductUnavailable() {
+        Client client = new Client("Alice", "Brown", "789789789", "gold");
+        Product product = new Product("Unavailable Product", 60.0, 3.0, 0, "Unavailable description");
+        clientRepository.addClient(client);
+        productRepository.addProduct(product);
+
+        boolean result = customerOrderRepository.addCustomerOrder(client, List.of(product));
+
+        assertThat(result, equalTo(false));
+    }
+
+    @Test
+    public void testAddCustomerOrder_ProductQuantityDecrement() {
+        Client client = new Client("Bob", "White", "123123123", "silver");
+        Product product = new Product("Decrement Product", 70.0, 2.5, 1, "Decrement description");
+        clientRepository.addClient(client);
+        productRepository.addProduct(product);
+
+        boolean result = customerOrderRepository.addCustomerOrder(client, List.of(product));
+
+        assertThat(result, equalTo(true));
+
+        Product updatedProduct = productRepository.getById(product.getProductId());
+        assertThat(updatedProduct.getQuantity(), equalTo(0));
+        assertThat(updatedProduct.isAvailable(), equalTo(false));
     }
 }

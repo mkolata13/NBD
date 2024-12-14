@@ -1,60 +1,64 @@
 package model;
 
+import com.datastax.oss.driver.api.mapper.annotations.CqlName;
+import com.datastax.oss.driver.api.mapper.annotations.Entity;
+import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
+import com.datastax.oss.driver.api.mapper.annotations.PropertyStrategy;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.bson.codecs.pojo.annotations.BsonCreator;
-import org.bson.codecs.pojo.annotations.BsonProperty;
-import org.bson.types.ObjectId;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
+import java.util.UUID;
 
 
 @Getter
 @Setter
 @NoArgsConstructor
-public class Product extends AbstractEntity {
+@Entity
+@CqlName("products")
+@PropertyStrategy(mutable = true)
+public class Product {
+    @PartitionKey
+    @CqlName("product_id")
+    private UUID productId;
 
-    @BsonProperty("name")
+    @CqlName("name")
     private String name;
 
-    @BsonProperty("baseprice")
+    @CqlName("base_price")
     private double basePrice;
 
-    @BsonProperty("weight")
+    @CqlName("weight")
     private double weight;
 
-    @BsonProperty("quantity")
+    @CqlName("quantity")
     private int quantity;
 
-    @BsonProperty("description")
+    @CqlName("description")
     private String description;
 
-    @BsonProperty("isavailable")
-    private boolean isAvailable;
-
-    @BsonCreator
-    public Product(@BsonProperty("_id") ObjectId entityId,
-                   @BsonProperty("name")String name,
-                   @BsonProperty("baseprice")double basePrice,
-                   @BsonProperty("weight")double weight,
-                   @BsonProperty("quantity")int quantity,
-                   @BsonProperty("description")String description) {
-        super(entityId);
-        this.name = name;
-        this.weight = weight;
-        this.basePrice = basePrice;
-        this.quantity = quantity;
-        this.description = description;
-        this.isAvailable = quantity > 0;
-    }
+    @CqlName("available")
+    private boolean available;
 
     public Product(String name, double basePrice, double weight, int quantity, String description) {
-        super(new ObjectId());
+        this.productId = UUID.randomUUID();
         this.name = name;
         this.weight = weight;
         this.basePrice = basePrice;
         this.quantity = quantity;
         this.description = description;
-        this.isAvailable = quantity > 0;
+        this.available = quantity > 0;
+    }
+
+    public Product(UUID id, String name, double basePrice, double weight, int quantity, String description, boolean available) {
+        this.productId = id;
+        this.name = name;
+        this.weight = weight;
+        this.basePrice = basePrice;
+        this.quantity = quantity;
+        this.description = description;
+        this.available = available;
     }
 
     @Override
@@ -71,7 +75,7 @@ public class Product extends AbstractEntity {
 
         return new org.apache.commons.lang3.builder.EqualsBuilder()
                 .append(basePrice, product.basePrice).append(weight, product.weight)
-                .append(quantity, product.quantity).append(isAvailable, product.isAvailable)
+                .append(quantity, product.quantity).append(available, product.available)
                 .append(name, product.name)
                 .append(description, product.description).isEquals();
     }
@@ -84,6 +88,19 @@ public class Product extends AbstractEntity {
                 .append(weight)
                 .append(quantity)
                 .append(description)
-                .append(isAvailable).toHashCode();
+                .append(available).toHashCode();
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("productId", productId)
+                .append("name", name)
+                .append("basePrice", basePrice)
+                .append("weight", weight)
+                .append("quantity", quantity)
+                .append("description", description)
+                .append("available", available)
+                .toString();
     }
 }

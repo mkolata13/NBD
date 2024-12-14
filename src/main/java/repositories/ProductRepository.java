@@ -1,25 +1,16 @@
 package repositories;
 
 import model.Product;
-import org.bson.types.ObjectId;
 
-import java.util.List;
+import java.util.UUID;
 
 public interface ProductRepository {
 
-    void addProduct(Product product);
+    boolean addProduct(Product product);
 
-    void deleteProduct(ObjectId id);
+    boolean deleteProduct(Product product);
 
-    void decrementQuantityOfProduct(ObjectId id);
+    void updateProduct(Product product);
 
-    void setProductUnAvailability(ObjectId id);
-
-    Product getById(ObjectId id);
-
-    List<Product> getAllProducts();
-
-    void dropCollection();
-
-    void closeCache();
+    Product getById(UUID id);
 }

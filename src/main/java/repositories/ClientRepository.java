@@ -1,22 +1,16 @@
 package repositories;
 
 import model.Client;
-import model.ClientType;
-import org.bson.types.ObjectId;
 
-import java.util.List;
+import java.util.UUID;
 
 public interface ClientRepository {
 
-    void addClient(Client client);
+    boolean addClient(Client client);
 
-    void deleteClient(ObjectId id);
+    boolean deleteClient(Client client);
 
-    void setClientType(ObjectId id, ClientType clientType);
+    void updateClient(Client client);
 
-    Client getClientById(ObjectId id);
-
-    List<Client> getAllClients();
-
-    void dropCollection();
+    Client getClientById(UUID id);
 }
