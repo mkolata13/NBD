@@ -54,9 +54,9 @@ public class Client {
 
     public double getDiscount() {
         return switch (type.toLowerCase()) {
-            case "gold" -> new ClientTypeGold().getDiscount();
-            case "silver" -> new ClientTypeSilver().getDiscount();
-            default -> new ClientTypeDefault().getDiscount();
+            case "gold" -> 0.5;
+            case "silver" -> 0.2;
+            default -> 0.0;
         };
     }
 

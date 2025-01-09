@@ -9,10 +9,6 @@ import dao.ClientDao;
 import mappers.ClientMapper;
 import mappers.ClientMapperBuilder;
 import model.Client;
-import model.ClientTypeDefault;
-import model.ClientTypeGold;
-import model.ClientTypeSilver;
-import providers.ClientTypeRepository;
 import repositories.AbstractCassandraRepository;
 import repositories.ClientRepository;
 
@@ -35,16 +31,6 @@ public class CassandraClientRepository extends AbstractCassandraRepository imple
         session.execute(createClients);
         ClientMapper clientMapper = new ClientMapperBuilder(session).build();
         this.clientDao = clientMapper.clientDao();
-        ClientTypeRepository clientTypeRepository = new ClientTypeRepository(session);
-        if(!clientTypeRepository.findByType("default")){
-            clientTypeRepository.create(new ClientTypeDefault());
-        }
-        if(!clientTypeRepository.findByType("silver")){
-            clientTypeRepository.create(new ClientTypeSilver());
-        }
-        if(!clientTypeRepository.findByType("gold")){
-            clientTypeRepository.create(new ClientTypeGold());
-        }
     }
 
     @Override
