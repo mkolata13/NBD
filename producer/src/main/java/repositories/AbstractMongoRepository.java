@@ -35,7 +35,9 @@ public abstract class AbstractMongoRepository implements AutoCloseable {
             PojoCodecProvider.builder()
                     .automatic(true)
                     .conventions(List.of(Conventions.ANNOTATION_CONVENTION))
-                    .build());
+                    .build())
+
+            ;
 
     private void initDbConnection() {
         MongoClientSettings settings = MongoClientSettings.builder()

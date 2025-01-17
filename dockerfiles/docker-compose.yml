@@ -1,4 +1,5 @@
-version: '3.8'
+name: kafka
+
 services:
   mongo_1:
     build: .

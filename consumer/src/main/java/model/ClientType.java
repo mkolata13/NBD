@@ -18,4 +18,6 @@ public abstract class ClientType {
     public ClientType(@BsonProperty double discount) {
         this.discount = discount;
     }
+
+    public abstract String getTypeName();
 }

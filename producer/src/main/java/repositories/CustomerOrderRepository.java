@@ -13,6 +13,8 @@ public interface CustomerOrderRepository {
 
     void addCustomerOrder(Client client, Product product);
 
+    void addCustomerOrder(CustomerOrder customerOrder);
+
     void deleteCustomerOrder(ObjectId id);
 
     CustomerOrder getById(ObjectId id);

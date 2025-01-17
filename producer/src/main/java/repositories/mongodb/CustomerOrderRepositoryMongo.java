@@ -4,6 +4,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
+import kafka.Producer;
 import model.Client;
 import model.CustomerOrder;
 import model.Product;
@@ -22,6 +23,11 @@ public class CustomerOrderRepositoryMongo extends AbstractMongoRepository implem
     public CustomerOrderRepositoryMongo() {
         customerOrdersCollection = getMongoDatabase().getCollection("customerorders", CustomerOrder.class);
         this.productRepository = new ProductRepositoryMongo();
+        try {
+            Producer.createTopic("customerorders2");
+        } catch (Exception e) {
+            System.out.println("Topic already exists");
+        }
     }
 
     public void addCustomerOrder(Client client, List<Product> products) {
@@ -72,6 +78,7 @@ public class CustomerOrderRepositoryMongo extends AbstractMongoRepository implem
             CustomerOrder customerOrder = new CustomerOrder(client, availableProducts);
             customerOrdersCollection.insertOne(customerOrder);
             session.commitTransaction();
+            Producer.sendCustomerOrder(customerOrder);
         } catch (Exception e) {
             throw new RuntimeException("Transaction failed: " + e.getMessage(), e);
         }
@@ -111,9 +118,21 @@ public class CustomerOrderRepositoryMongo extends AbstractMongoRepository implem
             CustomerOrder customerOrder = new CustomerOrder(client, lockedProduct);
             customerOrdersCollection.insertOne(customerOrder);
             session.commitTransaction();
+            Producer.sendCustomerOrder(customerOrder);
         } catch (Exception e) {
             throw new RuntimeException("Transaction failed: " + e.getMessage(), e);
         }
+    }
+
+    public void addCustomerOrder(CustomerOrder customerOrder) {
+        try (ClientSession session = getClientSession()) {
+            session.startTransaction();
+            customerOrdersCollection.insertOne(customerOrder);
+            session.commitTransaction();
+        } catch (Exception e) {
+            throw new RuntimeException("Transaction failed: " + e.getMessage(), e);
+        }
+        Producer.sendCustomerOrder(customerOrder);
     }
 
     public void deleteCustomerOrder(ObjectId id) {

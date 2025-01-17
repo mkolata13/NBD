@@ -1,3 +1,5 @@
+package codecs;
+
 import model.Client;
 import model.ClientTypeDefault;
 import model.ClientTypeGold;
