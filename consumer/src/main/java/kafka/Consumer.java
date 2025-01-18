@@ -10,6 +10,7 @@ import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.bson.types.ObjectId;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import repositories.CustomerOrderRepository;
 
@@ -103,8 +104,8 @@ public class Consumer {
 
         ObjectId id = new ObjectId(jsonObject.getString("orderId"));
         List<Product> products = mapJSONArrayToProducts(jsonObject.getJSONArray("products"));
-        Client client = mapJSONObjectToClient(jsonObject.getJSONObject("client"), jsonObject.getString("client_type"));
-        double orderPrice = jsonObject.getDouble("orderprice");
+        Client client = mapJSONObjectToClient(jsonObject.getJSONObject("client"), jsonObject.getString("clientType"));
+        double orderPrice = jsonObject.getDouble("orderPrice");
         LocalDateTime orderDate = LocalDateTime.ofEpochSecond(jsonObject.getLong("orderDate"), 0, ZoneOffset.UTC);
 
         return new CustomerOrder(id, client, products, orderDate, orderPrice);
@@ -115,7 +116,7 @@ public class Consumer {
         for (int i = 0; i < jsonArray.length(); i++) {
             JSONObject productJson = jsonArray.getJSONObject(i);
             Product product = new Product(
-                    new ObjectId(productJson.getString("_id")),
+                    new ObjectId(productJson.getString("productId")),
                     productJson.getString("name"),
                     productJson.getDouble("basePrice"),
                     productJson.getDouble("weight"),
@@ -128,8 +129,14 @@ public class Consumer {
     }
 
     private static Client mapJSONObjectToClient(JSONObject jsonObject, String clientType) {
+        System.out.println("DEBUG: Received JSON Object -> " + jsonObject.toString(2)); // Ładne formatowanie JSON
+
+        if (!jsonObject.has("clientId")) {
+            throw new JSONException("clientId not found in JSON: " + jsonObject);
+        }
+
         return new Client(
-                new ObjectId(jsonObject.getString("_id")),
+                new ObjectId(jsonObject.getString("clientId")),
                 jsonObject.getString("firstName"),
                 jsonObject.getString("lastName"),
                 jsonObject.getString("phoneNumber"),

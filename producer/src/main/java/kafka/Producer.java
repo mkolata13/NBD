@@ -1,6 +1,8 @@
 package kafka;
 
+import model.Client;
 import model.CustomerOrder;
+import model.Product;
 import org.apache.kafka.clients.admin.*;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -77,12 +79,46 @@ public class Producer {
 
     private static JSONObject mapCustomerOrderToJSON(CustomerOrder customerOrder) {
         JSONObject jsonCustomerOrder = new JSONObject();
-        jsonCustomerOrder.put("orderId", customerOrder.getEntityId().toHexString());
+        jsonCustomerOrder.put("orderId", customerOrder.getEntityId());
         jsonCustomerOrder.put("orderDate", customerOrder.getOrderDate().toEpochSecond(ZoneOffset.UTC));
         jsonCustomerOrder.put("orderPrice", customerOrder.getOrderPrice());
-        jsonCustomerOrder.put("client", new JSONObject(customerOrder.getClient()));
-        jsonCustomerOrder.put("client_type", customerOrder.getClient().getClientType().getTypeName());
-        jsonCustomerOrder.put("products", new JSONArray(customerOrder.getProducts()));
+        jsonCustomerOrder.put("client", mapClientToJSON(customerOrder.getClient()));
+        jsonCustomerOrder.put("clientType", customerOrder.getClient().getClientType().getTypeName());
+        jsonCustomerOrder.put("products", mapProductsToJSON(customerOrder.getProducts()));
+        System.out.println(jsonCustomerOrder);
         return jsonCustomerOrder;
+    }
+
+    private static JSONArray mapProductsToJSON(List<Product> products) {
+        JSONArray jsonProducts = new JSONArray();
+        for (Product product : products) {
+            JSONObject jsonProduct = new JSONObject();
+            ObjectId objectId = product.getEntityId();
+            jsonProduct.put("productId", objectId.toString());
+            jsonProduct.put("name", product.getName());
+            jsonProduct.put("basePrice", product.getBasePrice());
+            jsonProduct.put("weight", product.getWeight());
+            jsonProduct.put("quantity", product.getQuantity());
+            jsonProduct.put("description", product.getDescription());
+            jsonProduct.put("isAvailable", product.isAvailable());
+            jsonProducts.put(jsonProduct);
+        }
+        return jsonProducts;
+    }
+
+    private static JSONObject mapClientToJSON(Client client) {
+        JSONObject jsonClient = new JSONObject();
+        jsonClient.put("clientId", client.getEntityId().toString());
+        jsonClient.put("firstName", client.getFirstName());
+        jsonClient.put("lastName", client.getLastName());
+        jsonClient.put("phoneNumber", client.getPhoneNumber());
+
+        JSONObject jsonClientType = new JSONObject();
+        jsonClientType.put("_clazz", client.getClientType().getClass().getSimpleName().toLowerCase());
+        jsonClientType.put("discount", client.getClientType().getDiscount());
+
+        jsonClient.put("client_type", jsonClientType);
+
+        return jsonClient;
     }
 }

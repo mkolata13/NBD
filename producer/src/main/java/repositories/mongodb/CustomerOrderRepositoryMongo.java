@@ -129,10 +129,10 @@ public class CustomerOrderRepositoryMongo extends AbstractMongoRepository implem
             session.startTransaction();
             customerOrdersCollection.insertOne(customerOrder);
             session.commitTransaction();
+            Producer.sendCustomerOrder(customerOrder);
         } catch (Exception e) {
             throw new RuntimeException("Transaction failed: " + e.getMessage(), e);
         }
-        Producer.sendCustomerOrder(customerOrder);
     }
 
     public void deleteCustomerOrder(ObjectId id) {

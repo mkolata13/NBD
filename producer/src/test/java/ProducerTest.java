@@ -23,14 +23,6 @@ class ProducerTest {
 
     private static CustomerOrderRepository customerOrderRepository;
 
-    @Test
-    public void test1() {
-        Product product1 = new Product("product1", 10, 1, 1, "product1 description");
-        Client client1 = new Client("John", "Doe", "123456789", new ClientTypeGold());
-        CustomerOrder customerOrder = new CustomerOrder(client1, List.of(product1));
-        System.out.println(customerOrder.getClient().getClientType().getTypeName());
-    }
-
     @BeforeAll
     public void setUp() {
         customerOrderRepository = new CustomerOrderRepositoryMongo();
