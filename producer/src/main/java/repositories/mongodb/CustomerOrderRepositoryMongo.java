@@ -24,7 +24,7 @@ public class CustomerOrderRepositoryMongo extends AbstractMongoRepository implem
         customerOrdersCollection = getMongoDatabase().getCollection("customerorders", CustomerOrder.class);
         this.productRepository = new ProductRepositoryMongo();
         try {
-            Producer.createTopic("customerorders2");
+            Producer.createTopic("customerorders");
         } catch (Exception e) {
             System.out.println("Topic already exists");
         }

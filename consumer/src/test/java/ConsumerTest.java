@@ -6,6 +6,6 @@ import org.junit.jupiter.api.TestInstance;
 class ConsumerTest {
     @Test
     public void consumeTest() throws InterruptedException {
-        Consumer.consumeTopicsByGroup("customerorders2");
+        Consumer.consumeTopicsByGroup("customerorders");
     }
 }

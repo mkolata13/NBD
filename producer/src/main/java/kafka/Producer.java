@@ -38,9 +38,12 @@ public class Producer {
         producerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
         producerConfig.put(ProducerConfig.CLIENT_ID_CONFIG, "local");
         producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "kafka1:9192, kafka2:9292, kafka3:9392");
-        // producerConfig.put(ProducerConfig.TRANSACTIONAL_ID_CONFIG, "Yjk2NWYwYTE4Yzg0NGE5M2");
+        producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
+        producerConfig.put(ProducerConfig.TRANSACTIONAL_ID_CONFIG, "4b05a509-d98d-4fa4-9daf-a8d329beb956");
+        producerConfig.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true");
 
         producer = new KafkaProducer<>(producerConfig);
+        producer.initTransactions();
     }
 
     public static void createTopic(String name) throws InterruptedException {
@@ -59,8 +62,8 @@ public class Producer {
             CreateTopicsResult result = admin.createTopics(List.of(newTopic), options);
             KafkaFuture<Void> futureResult = result.values().get(topicName);
             futureResult.get();
-        } catch (ExecutionException ee) {
-            System.out.println(ee.getCause());
+        } catch (ExecutionException e) {
+            System.out.println(e.getCause());
         }
     }
 
@@ -69,10 +72,15 @@ public class Producer {
             initProducer();
             JSONObject jsonCustomerOrder = mapCustomerOrderToJSON(customerOrder);
             ProducerRecord<ObjectId, String> record = new ProducerRecord<>(topicName, customerOrder.getEntityId(), jsonCustomerOrder.toString());
+
+            producer.beginTransaction();
             Future<RecordMetadata> sent = producer.send(record);
             RecordMetadata recordMetadata = sent.get();
+
+            producer.commitTransaction();
             System.out.println(recordMetadata);
         } catch (ExecutionException | InterruptedException e) {
+            producer.abortTransaction();
             System.out.println(e.getCause());
         }
     }
